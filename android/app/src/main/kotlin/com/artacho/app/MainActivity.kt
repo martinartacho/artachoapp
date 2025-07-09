@@ -1,4 +1,4 @@
-package com.example.hola_mundo_app
+package com.artacho.app
 
 import io.flutter.embedding.android.FlutterActivity
 

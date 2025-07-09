@@ -72,23 +72,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 15),
             _buildInfoRow('Nombre:', user.name),
             _buildInfoRow('Email:', user.email),
-            if (user.token != null) ...[
-              const SizedBox(height: 10),
-              const Text(
-                'Token (provisional):',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                //  user.token!
-                'Ok',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
           ],
         ),
       ),

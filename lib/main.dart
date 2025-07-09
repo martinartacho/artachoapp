@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/auth_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'my_app.dart'; // Ajusta según tu estructura
+
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/profile_screen.dart';
 
-void main() async {
+/*void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
 
@@ -18,11 +21,28 @@ void main() async {
       child: const MyApp(),
     ),
   );
+} */
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
+  print(
+    '🌍 API_BASE_URL: ${dotenv.env['API_BASE_URL']}',
+  ); // ✅ Aquí sí es válido
+
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(prefs: prefs),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -81,12 +101,12 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Primera App Flutter')),
+      appBar: AppBar(title: const Text('Artacho App')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Hola Mundo 👋', style: TextStyle(fontSize: 24)),
+            const Text('👋 Hola 👋', style: TextStyle(fontSize: 24)),
             const SizedBox(height: 40),
             SizedBox(
               width: 200,
@@ -107,6 +127,14 @@ class HomeScreen extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
               child: const Text('Recuperar contraseña'),
+            ),
+            const SizedBox(height: 40),
+
+            // ✅ Frase para identificar versión
+            const Text(
+              '📝 Versió: “Amb paciència i amb salivera…”',
+              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
