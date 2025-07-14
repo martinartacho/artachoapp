@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.artacho.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35  // Actualizado a 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.artacho.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35  // Actualizado a 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -45,7 +45,7 @@ android {
     // 🏗️ Configuración del build release
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+            // isMinifyEnabled = true
             isShrinkResources = true
 
             proguardFiles(
@@ -55,6 +55,15 @@ android {
 
             signingConfig = signingConfigs.getByName("release")
         }
+    }
+
+    // 👇 Nuevo: Configuración para Android 15
+    buildFeatures {
+        buildConfig = true
+    }
+    dependencies {
+        implementation("com.google.android.material:material:1.11.0")
+        // ... otras dependencias
     }
 }
 

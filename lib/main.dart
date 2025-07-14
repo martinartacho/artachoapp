@@ -3,36 +3,26 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/auth_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'my_app.dart'; // Ajusta según tu estructura
 
+import 'package:package_info_plus/package_info_plus.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/profile_screen.dart';
-
-/*void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider(prefs: prefs),
-      child: const MyApp(),
-    ),
-  );
-} */
+import 'screens/feedback_screen.dart';
+// import 'package:flutter/foundation.dart'; // Para kReleaseMode
+// import 'package:flutter/services.dart'; // Para rootBundle
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
 
-  print(
-    '🌍 API_BASE_URL: ${dotenv.env['API_BASE_URL']}',
-  ); // ✅ Aquí sí es válido
+  // SOLUCIÓN SIMPLIFICADA - Funciona en debug y release
+  await dotenv.load(fileName: "assets/.env");
+
+  // print('🌍 API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
 
   final prefs = await SharedPreferences.getInstance();
-
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthProvider(prefs: prefs),
@@ -82,6 +72,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => const ProfileScreen(),
             );
+          case '/feedback':
+            return MaterialPageRoute(
+              builder: (context) => const FeedbackScreen(),
+            );
           default:
             return MaterialPageRoute(
               builder: (context) => authProvider.isAuthenticated
@@ -95,11 +89,30 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      setState(() {
+        _version = '${info.version}+${info.buildNumber}';
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const frase = 'Millor a poc a poc i bona lletra.';
+
     return Scaffold(
       appBar: AppBar(title: const Text('Artacho App')),
       body: Center(
@@ -130,11 +143,25 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // ✅ Frase para identificar versión
-            const Text(
-              '📝 Versió: “Amb paciència i amb salivera…”',
-              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-              textAlign: TextAlign.center,
+            // ✅ Mostrar versión y frase
+            Column(
+              children: [
+                Text(
+                  '“$frase”',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Versió: $_version',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ],
         ),

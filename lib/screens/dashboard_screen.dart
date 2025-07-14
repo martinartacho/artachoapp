@@ -116,6 +116,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         _buildMenuOption(
           context,
+          icon: Icons.feedback,
+          title: 'Enviar sugerencia',
+          onTap: () {
+            Navigator.pushNamed(context, '/feedback');
+          },
+        ),
+
+        _buildMenuOption(
+          context,
           icon: Icons.settings,
           title: 'Configuración',
           onTap: () {
