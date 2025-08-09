@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
+import '../widgets/dashboard_user_info.dart';
+import '../widgets/dashboard_menu_section.dart';
+import '../services/notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,12 +14,29 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+  int _unreadNotifications = 0;
+  late Future<List<dynamic>> _notificationsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUnreadCount();
+    _notificationsFuture = NotificationService.getNotifications(context);
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    final count = await NotificationService.getUnreadCount(context);
+    setState(() {
+      _unreadNotifications = count;
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final authProvider = Provider.of<AuthProvider>(context, listen: true);
 
-    // Si no tenemos fecha de creación, cargar perfil
     if (authProvider.user != null && authProvider.user?.createdAt == null) {
       authProvider.loadUserProfile();
     }
@@ -27,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final UserModel? user = authProvider.user;
 
-    // Si el usuario cierra sesión o elimina cuenta mientras está en dashboard
     if (!authProvider.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
@@ -39,156 +58,129 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Dashboard'),
         automaticallyImplyLeading: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            if (user != null) ...[
-              _buildUserInfoCard(user),
-              const SizedBox(height: 30),
-            ],
-            _buildMenuSection(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserInfoCard(UserModel user) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Información del usuario',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            _buildInfoRow('Nombre:', user.name),
-            _buildInfoRow('Email:', user.email),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: IndexedStack(
+        index: _selectedIndex,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
+          _buildDashboard(user),
+          _buildNotificationsList(),
+          const DashboardMenuSection(),
         ],
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  Widget _buildMenuSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Menú',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  BottomNavigationBar _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: (index) => setState(() => _selectedIndex = index),
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Inicio',
         ),
-        const SizedBox(height: 15),
-        _buildMenuOption(
-          context,
-          icon: Icons.person,
-          title: 'Perfil',
-          onTap: () {
-            Navigator.pushNamed(context, '/profile');
-          },
+        BottomNavigationBarItem(
+          icon: Stack(
+            children: [
+              const Icon(Icons.notifications),
+              if (_unreadNotifications > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unreadNotifications',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          label: 'Notificaciones',
         ),
-        _buildMenuOption(
-          context,
-          icon: Icons.feedback,
-          title: 'Enviar sugerencia',
-          onTap: () {
-            Navigator.pushNamed(context, '/feedback');
-          },
-        ),
-
-        _buildMenuOption(
-          context,
-          icon: Icons.settings,
-          title: 'Configuración',
-          onTap: () {
-            _showComingSoonMessage(context);
-          },
-        ),
-        _buildMenuOption(
-          context,
-          icon: Icons.history,
-          title: 'Historial',
-          onTap: () {
-            (context);
-          },
-        ),
-        const Divider(height: 30),
-        _buildMenuOption(
-          context,
-          icon: Icons.logout,
-          title: 'Cerrar sesión',
-          color: Colors.red,
-          onTap: () {
-            final authProvider = Provider.of<AuthProvider>(
-              context,
-              listen: false,
-            );
-            authProvider.logout();
-            Navigator.pushReplacementNamed(context, '/');
-          },
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.menu),
+          label: 'Menú',
         ),
       ],
     );
   }
 
-  void _showComingSoonMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Estamos trabajando en esta función, próximamente estará funcional',
-        ),
-        duration: Duration(seconds: 3),
+  Widget _buildDashboard(UserModel? user) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          if (user != null) ...[
+            DashboardUserInfo(user: user),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildMenuOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color color = Colors.blue,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(
-          title,
-          style: TextStyle(color: color, fontWeight: FontWeight.bold),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
+  Widget _buildNotificationsList() {
+    return FutureBuilder<List<dynamic>>(
+      future: _notificationsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error al cargar notificaciones'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No hay notificaciones'));
+        }
+
+        final notifications = snapshot.data!;
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: notifications.length,
+          separatorBuilder: (context, index) => const Divider(),
+          itemBuilder: (context, index) {
+            final notif = notifications[index];
+            final isRead = notif['read_at'] != null;
+            return ListTile(
+              leading: const Icon(Icons.notifications_active),
+              title: Text(notif['title'] ?? 'Sin título'),
+              subtitle: Text(notif['body'] ?? 'Sin contenido'),
+              trailing: Icon(
+                Icons.circle,
+                color: isRead ? Colors.green : Colors.red,
+                size: 12,
+              ),
+              onTap: () async {
+                if (!isRead) {
+                  final success =
+                      await NotificationService.markNotificationAsRead(
+                          context, notif['id']);
+                  if (success) {
+                    setState(() {
+                      notif['read_at'] = DateTime.now().toIso8601String();
+                      _unreadNotifications =
+                          (_unreadNotifications - 1).clamp(0, 999);
+                    });
+                  }
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

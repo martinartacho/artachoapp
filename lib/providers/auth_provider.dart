@@ -31,7 +31,7 @@ class AuthProvider with ChangeNotifier {
   String? get token => _token;
   UserModel? get user => _user;
 
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('${Config.baseUrl}/login'),
@@ -47,7 +47,6 @@ class AuthProvider with ChangeNotifier {
           _token = responseBody['token'];
           _isAuthenticated = true;
 
-          // Almacenar información del usuario
           if (responseBody['user'] != null) {
             _user = UserModel.fromJson(responseBody['user']);
             await prefs.setString('user', jsonEncode(_user!.toJson()));
@@ -55,6 +54,7 @@ class AuthProvider with ChangeNotifier {
 
           await prefs.setString('token', _token!);
           notifyListeners();
+          return true; // ✅ Login exitoso
         } else {
           throw Exception('Token no encontrado en la respuesta');
         }
@@ -64,7 +64,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       developer.log('Error en login: $e', name: 'AuthProvider', error: e);
-      rethrow;
+      return false; // ❌ Login fallido
     }
   }
 
@@ -96,13 +96,14 @@ class AuthProvider with ChangeNotifier {
           }
 
           await prefs.setString('token', _token!);
+          print('🔑 TOKEN desde Flutter: $_token');
           notifyListeners();
         } else {
+          print('🔑 NO TOKEN desde Flutter');
           throw Exception('Token no encontrado en la respuesta');
         }
       } else {
-        final errorMsg =
-            responseBody['message'] ??
+        final errorMsg = responseBody['message'] ??
             responseBody['errors']?.toString() ??
             'Error desconocido';
         throw Exception('$errorMsg (${response.statusCode})');
@@ -285,8 +286,7 @@ class AuthProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         // No necesitamos actualizar datos de usuario aquí
       } else {
-        final errorMsg =
-            responseBody['message'] ??
+        final errorMsg = responseBody['message'] ??
             responseBody['errors']?.toString() ??
             'Error desconocido';
         throw Exception('$errorMsg (${response.statusCode})');

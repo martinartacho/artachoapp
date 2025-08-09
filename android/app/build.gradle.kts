@@ -8,27 +8,31 @@ plugins {
 
 android {
     namespace = "com.artacho.app"
-    compileSdk = 35  // Actualizado a 35
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.artacho.app"
-        minSdk = flutter.minSdkVersion
-        targetSdk = 35  // Actualizado a 35
+        minSdk = 21
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    // 🔐 Configuración de firma
     signingConfigs {
         create("release") {
             val keystoreProperties = Properties().apply {
@@ -42,30 +46,28 @@ android {
         }
     }
 
-    // 🏗️ Configuración del build release
     buildTypes {
         getByName("release") {
-            // isMinifyEnabled = true
             isShrinkResources = true
-
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
             signingConfig = signingConfigs.getByName("release")
         }
     }
-
-    // 👇 Nuevo: Configuración para Android 15
-    buildFeatures {
-        buildConfig = true
-    }
-    dependencies {
-        implementation("com.google.android.material:material:1.11.0")
-        // ... otras dependencias
-    }
 }
+
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.android.material:material:1.11.0")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4") // ✅ requerido para notificaciones
+}
+
+apply(plugin = "com.google.gms.google-services")
 
 flutter {
     source = "../.."
