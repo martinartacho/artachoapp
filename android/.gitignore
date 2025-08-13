@@ -1,3 +1,6 @@
+# Remember to never publicly share your keystore.
+# See https://flutter.dev/to/reference-keystore
+key.properties
 gradle-wrapper.jar
 /.gradle
 /captures/
@@ -7,8 +10,15 @@ gradle-wrapper.jar
 GeneratedPluginRegistrant.java
 .cxx/
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/to/reference-keystore
-key.properties
+# Nunca subir configuraciones de Google/Firebase
+google-services.json
+app/google-services.json
+
+# Nunca subir keystore o certificados
 **/*.keystore
 **/*.jks
+**/*.pem
+**/*.p12
+**/*.crt
+
+# Remember to never publicly share your keystore.
